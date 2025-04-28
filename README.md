@@ -115,82 +115,77 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 end)
 
 local Players = game:GetService("Players")
- local RunService = game:GetService("RunService")
- 
- local localPlayer = Players.LocalPlayer
- local espEnabled = false
+local RunService = game:GetService("RunService")
 
- -- 📦 ฟังก์ชันสร้าง ESP (Highlight)
- local function createESP(character)
-     if not character:FindFirstChild("ESP_Highlight") then
-         local highlight = Instance.new("Highlight")
-         highlight.Name = "ESP_Highlight"
+local localPlayer = Players.LocalPlayer
+local espEnabled = false
+
+-- 📦 ฟังก์ชันสร้าง ESP (Highlight)
+local function createESP(character)
+    if not character:FindFirstChild("ESP_Highlight") then
+        local highlight = Instance.new("Highlight")
+        highlight.Name = "ESP_Highlight"
         highlight.FillColor = Color3.fromRGB(255, 0, 0) -- สีตัว ESP
-         highlight.OutlineColor = Color3.fromRGB(255, 255, 255) -- สีขอบ
-         highlight.FillTransparency = 0.5
-         highlight.OutlineTransparency = 0
+        highlight.OutlineColor = Color3.fromRGB(255, 255, 255) -- สีขอบ
+        highlight.FillTransparency = 0.5
+        highlight.OutlineTransparency = 0
         highlight.Adornee = character
-         highlight.Parent = character
-     end
- end
- 
- -- 🗑️ ฟังก์ชันลบ ESP
- local function removeESP(character)
-     local highlight = character:FindFirstChild("ESP_Highlight")
-     if highlight then
-         highlight:Destroy()
-     end
- end
- 
- -- 🎯 ฟังก์ชันอัปเดต ESP ให้กับผู้เล่นคนเดียว
- local function updateESP(player)
-     if player ~= localPlayer then
-         if player.Character then
-             if espEnabled then
-                 createESP(player.Character)
-             else
-                 removeESP(player.Character)
-             end
-         end
-     end
- end
- 
- -- ⚡ ฟังก์ชันเชื่อมต่อเมื่อตัวละครของผู้เล่นเกิด
- local function setupPlayer(player)
-     -- ถ้ามีตัวละครแล้ว
-     if player.Character then
-         wait(0.5) -- รอโหลดตัวเสร็จก่อน
-         updateESP(player)
-     end
- 
-    -- ถ้ามีการเกิดตัวใหม่
-     player.CharacterAdded:Connect(function(character)
-         character:WaitForChild("HumanoidRootPart") -- รอโหลด
-         wait(0.5)
+        highlight.Parent = character
+    end
+end
+
+-- 🗑️ ฟังก์ชันลบ ESP
+local function removeESP(character)
+    local highlight = character:FindFirstChild("ESP_Highlight")
+    if highlight then
+        highlight:Destroy()
+    end
+end
+
+-- 🎯 ฟังก์ชันอัปเดต ESP ให้กับผู้เล่นคนเดียว
+local function updateESP(player)
+    if player ~= localPlayer then
+        if player.Character then
+            if espEnabled then
+                createESP(player.Character)
+            else
+                removeESP(player.Character)
+            end
+        end
+    end
+end
+
+-- 🛠️ ฟังก์ชันติดตั้ง ESP ให้ผู้เล่นที่มีอยู่แล้ว
+for _, player in ipairs(Players:GetPlayers()) do
+    if player.Character then
         updateESP(player)
-     end)
- end
- 
- -- 🛠️ ติดตั้ง ESP ให้ผู้เล่นที่มีอยู่แล้ว
- for _, player in ipairs(Players:GetPlayers()) do
-     setupPlayer(player)
- end
- 
- -- 🛠️ เมื่่อมีผู้เล่นใหม่เข้ามา
- Players.PlayerAdded:Connect(function(player)
-     setupPlayer(player)
- end)
- 
- -- 🟢 ใส่ Toggle UI (เหมือน Aimbot Toggle)
- local Toggle = Tab:CreateToggle({
+    end
+end
+
+-- 🛠️ เมื่่อมีผู้เล่นใหม่เข้ามา
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function(character)
+        character:WaitForChild("HumanoidRootPart") -- รอโหลดตัวละคร
+        updateESP(player)
+    end)
+end)
+
+-- 🟢 ใส่ Toggle UI (เหมือน Aimbot Toggle)
+local Toggle = Tab:CreateToggle({
     Name = "ESP (มองเห็นศัตรู)",
     CurrentValue = false,
     Flag = "ESP_Toggle",
     Callback = function(Value)
-       espEnabled = Value
-       -- อัปเดต ESP ทุกคนเมื่อเปิด/ปิด
-       for _, player in ipairs(Players:GetPlayers()) do
-           updateESP(player)
-       end
+        espEnabled = Value
     end,
- })
+})
+
+-- ⚡ อัปเดต ESP ทุกเฟรม
+RunService.RenderStepped:Connect(function()
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player.Character then
+            updateESP(player)
+        end
+    end
+end)
+
